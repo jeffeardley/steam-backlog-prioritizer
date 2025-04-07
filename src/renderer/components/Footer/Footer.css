@@ -1,0 +1,11 @@
+.footer-container {
+    width: 100%;
+    height: 3em;
+    background-color: lightgray;
+    display: flex;
+    flex-direction: row;
+}
+
+.central-footer-container {
+    flex: 1;
+}
