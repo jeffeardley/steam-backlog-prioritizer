@@ -5,7 +5,6 @@ class SuggesterError extends Error {
   }
 }
 
-
 export class Suggester {
     private initialized: boolean = false;
 

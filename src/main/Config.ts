@@ -1,6 +1,7 @@
 import { BrowserWindow } from "electron";
 import { AppController, AppControllerBuilder } from "./AppController";
 import { SuggesterController } from "./suggester/SuggesterController";
+import { DataRetrieverController } from "./data-retriever/DataRetrieverController";
 
 export interface IConfig {
     appController: AppController;
@@ -35,6 +36,7 @@ export class DefaultConfig implements IConfig {
             const controllerBuilder = new AppControllerBuilder();
 
             controllerBuilder.set( 'suggester', new SuggesterController() );
+            controllerBuilder.set( 'data-retriever', new DataRetrieverController() );
 
             this._appController = controllerBuilder.create();
         }

@@ -3,6 +3,7 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { ipcMain } from 'electron';
 import { DefaultConfig, GlobalConfiguration } from './main/Config';
+import 'dotenv/config';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -18,7 +19,7 @@ ipcMain.handle('ipc-request', async (_event, channel, ...args) => {
     return await superController.handleIPCCall(channel, ...args);
   } catch (error) {
     console.error(`Error handling IPC call for channel ${channel}:`, error);
-    return error; // because of the optional return type of Error on ToAllAPI methods, the renderer will know to check for errors
+    return error;
   }
 });
 

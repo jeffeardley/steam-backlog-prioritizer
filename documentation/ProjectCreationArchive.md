@@ -71,6 +71,3 @@ This will produce the distrubtable in the `out/` directory. The application is i
 for the each operating system. For example, the `.zip` file created on a Mac is found at
 `out/make/zip/darwin/x64/<zip-file-name>.zip`. On a Mac, find and double-click the `.zip` file in
 Finder. Momentarily, the application will appear. Open the application, and your app will be running.  
-
-### Implementing ToAll's structure  
-Inside of the `src/` directory, create the `main/` and `renderer/` directories.  
