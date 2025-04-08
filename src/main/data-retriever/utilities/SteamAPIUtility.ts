@@ -3,6 +3,11 @@ import axios from 'axios';
 export interface GameData {
     name: string;
     playtime: number;
+    timeToBeat?: {
+        mainStory: number;
+        mainExtra: number;
+        completionist: number;
+    };
 }
 
 export class SteamAPIUtility {
@@ -11,14 +16,12 @@ export class SteamAPIUtility {
         api_key: string
     ): Promise<string> {
         try {
-            const res = await axios.get('https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/', {
+            const res: any = await axios.get('https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/', {
             params: {
                 key: api_key,
                 vanityurl: vanity
             }
             });
-
-            console.log('result', res.data.response.steamid);
 
             if (res.data.response.success === 1) {
                 return res.data.response.steamid;
@@ -26,7 +29,7 @@ export class SteamAPIUtility {
                 throw new Error('Failed to resolve vanity URL.');
             }
         } catch (err) {
-            console.error('Error resolving Steam ID:', err.message);
+            // console.error('Error resolving Steam ID:', err.message);
         }
     }
 
@@ -35,7 +38,7 @@ export class SteamAPIUtility {
         api_key: string
     ): Promise<GameData[]> {
         try {
-            const res = await axios.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/', {
+            const res: any = await axios.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/', {
             params: {
                 key: api_key,
                 steamid,
@@ -45,14 +48,14 @@ export class SteamAPIUtility {
 
             const games = res.data.response.games || [];
             const gameData = games.map(game => ({
-                name: game.name, 
+                name: game.name.replace(/[^\w\s:.\-]/g, ''), // Remove special characters
                 playtime: (game.playtime_forever / 60).toFixed(2) // Convert from minutes to hours
             }))
 
             return gameData;
 
         } catch (err) {
-            console.error('Error fetching games:', err.message);
+            // console.error('Error fetching games:', err.message);
         }
     }
 }

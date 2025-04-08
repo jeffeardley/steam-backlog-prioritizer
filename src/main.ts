@@ -3,6 +3,7 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { ipcMain } from 'electron';
 import { DefaultConfig, GlobalConfiguration } from './main/Config';
+import axios from 'axios';
 import 'dotenv/config';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -12,6 +13,8 @@ if (started) {
 
 GlobalConfiguration.setConfiguration( new DefaultConfig() );
 const superController = GlobalConfiguration.config.appController;
+
+(global as any).axios = axios;
 
 // Set up IPC handler for all controller requests
 ipcMain.handle('ipc-request', async (_event, channel, ...args) => {

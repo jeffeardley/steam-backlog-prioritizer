@@ -5,18 +5,37 @@ import { GameData } from 'src/main/data-retriever/utilities/SteamAPIUtility';
 const HomePage: React.FC = () => {
   const [apiKey, setAPIKey] = useState('');
   const [vanity, setVanity] = useState('');
+  const [steamID, setSteamID] = useState('');
 
   const [gameData, setGameData] = useState<GameData[] | null>(null);
 
-  const handleGetGameList = async () => {
-    const gameData = await window.BackEndAPI.dataRetriever.getOwnedGames(vanity, apiKey);
-    gameData.sort((a, b) => b.playtime - a.playtime);
-    setGameData(gameData);
-  }
+  const API = window.BackEndAPI;
 
-  useEffect(() => {
-    handleGetGameList();
-  }, []);
+  const handleGetGameList = async () => {
+    const gameData = await API.dataRetriever.getOwnedGames(vanity, apiKey, steamID);
+    gameData.sort((a, b) => b.playtime - a.playtime);
+  
+    const updatedGameData = await Promise.all(
+      gameData.map(async (game) => {
+        const timeToBeatData = await API.dataRetriever.getEstimatedLengthToBeat(game.name);
+        return {
+          ...game,
+          timeToBeat: {
+            mainStory: timeToBeatData.mainStory,
+            mainExtra: timeToBeatData.mainExtra,
+            completionist: timeToBeatData.completionist,
+          },
+          playtime: parseFloat(game.playtime.toString()),
+        };
+      })
+    );
+  
+    setGameData(updatedGameData);
+  };
+
+  // useEffect(() => {
+  //   handleGetGameList();
+  // }, []);
 
   return (
     <div className="home-page">
@@ -33,6 +52,12 @@ const HomePage: React.FC = () => {
           setVanity(e.target.value)
         }}
       />
+      <label>Steam Account ID</label>
+      <input
+        onChange={(e) => {
+          setSteamID(e.target.value)
+        }}
+      />
       <button
         onClick={handleGetGameList}
       >
@@ -44,6 +69,15 @@ const HomePage: React.FC = () => {
             <div className="game-card">
               <div className="game-title">{game.name}</div>
               <div className="game-playtime">{game.playtime}</div>
+              <div className="game-time-to-beat">
+                {game.timeToBeat && (
+                  <div>
+                    <div>Main Story: {game.timeToBeat.mainStory} hours</div>
+                    <div>Main Extra: {game.timeToBeat.mainExtra} hours</div>
+                    <div>Completionist: {game.timeToBeat.completionist} hours</div>
+                  </div>
+                )}
+              </div>
             </div>
           </React.Fragment>
         ))}
