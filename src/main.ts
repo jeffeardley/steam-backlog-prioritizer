@@ -5,6 +5,7 @@ import { ipcMain } from 'electron';
 import { DefaultConfig, GlobalConfiguration } from './main/Config';
 import axios from 'axios';
 import 'dotenv/config';
+import { initializeDatabase, closeDatabase } from './main/Database';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -59,14 +60,16 @@ async function sleep( time: number ): Promise<void> {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
+app.on('ready', async () => {
+  await initializeDatabase();
   createWindow();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
   if (process.platform !== 'darwin') {
+    await closeDatabase();
     app.quit();
   }
 });

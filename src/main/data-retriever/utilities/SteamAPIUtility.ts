@@ -1,13 +1,24 @@
 import axios from 'axios';
+import { insertGame } from '../../Database';
 
 export interface GameData {
     name: string;
-    playtime: number;
+    playtime: string;
+    appID: number;
+    iconHash: string;
     timeToBeat?: {
         mainStory: number;
         mainExtra: number;
         completionist: number;
     };
+}
+
+interface SteamGameReturn {
+    appid: number;
+    name: string;
+    playtime_forever: number;
+    img_icon_url: string;
+    content_descriptorids: number[];
 }
 
 export class SteamAPIUtility {
@@ -39,17 +50,26 @@ export class SteamAPIUtility {
     ): Promise<GameData[]> {
         try {
             const res: any = await axios.get('https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/', {
-            params: {
-                key: api_key,
-                steamid,
-                include_appinfo: true
-            }
+                params: {
+                    key: api_key,
+                    steamid,
+                    include_appinfo: true
+                }
             });
+            console.log(res);
 
-            const games = res.data.response.games || [];
+            const games: SteamGameReturn[] = res.data.response.games || [];
+            console.log('game structure', games[0])
+            await Promise.all(
+                games.map(async (game) => {
+                    await insertGame(game.appid, game.name, null);
+                })
+            );
             const gameData = games.map(game => ({
                 name: game.name.replace(/[^\w\s:.\-]/g, ''), // Remove special characters
-                playtime: (game.playtime_forever / 60).toFixed(2) // Convert from minutes to hours
+                playtime: (game.playtime_forever / 60).toFixed(2), // Convert from minutes to hours
+                appID: game.appid,
+                iconHash: game.img_icon_url
             }))
 
             return gameData;

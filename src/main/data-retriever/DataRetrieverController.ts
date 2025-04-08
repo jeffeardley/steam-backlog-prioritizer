@@ -2,6 +2,7 @@ import { BaseController } from "../interfaces/BaseController";
 import { SteamAPIUtility } from "./utilities/SteamAPIUtility";
 import { HowLongToBeatAPIUtility } from "./utilities/HowLongToBeatAPIUtility";
 import { GameData } from "./utilities/SteamAPIUtility";
+import { insertGame, insertUser } from "../Database";
 
 export class DataRetrieverController extends BaseController {
     private steamAPI: SteamAPIUtility;
@@ -34,6 +35,7 @@ export class DataRetrieverController extends BaseController {
         } else {
             steamIDToUse = steamID;
         }
+        await insertUser(steamIDToUse, vanity);
         const ownedGames = await this.steamAPI.getOwnedGames(steamIDToUse, this.steamAPIKey);
         return ownedGames;
     }

@@ -70,6 +70,7 @@
     "react-router-dom": "^7.2.0",
     "replicate": "^1.0.1",
     "say-it": "^0.1.8",
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "text-to-ipa": "^1.0.0",
     "uuid": "^11.1.0",
