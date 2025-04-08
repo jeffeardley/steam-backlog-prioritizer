@@ -3,9 +3,9 @@ import './HomePage.css';
 import { GameData } from 'src/main/data-retriever/utilities/SteamAPIUtility';
 
 const HomePage: React.FC = () => {
-  const [apiKey, setAPIKey] = useState('');
-  const [vanity, setVanity] = useState('');
-  const [steamID, setSteamID] = useState('');
+  const [inputApiKey, setAPIKey] = useState('');
+  const [inputVanity, setVanity] = useState('');
+  const [inputSteamID, setSteamID] = useState('');
   const [indexedUsers, setIndexedUsers] = useState([]);
 
   const [gameData, setGameData] = useState<GameData[] | null>(null);
@@ -14,28 +14,17 @@ const HomePage: React.FC = () => {
 
   const [loading, setLoading] = useState(false); // Add loading state
 
-  const handleGetGameList = async () => {
+  const handleIndexedUserClick = async (steamID: string) => {
+    handleGetGameList('', inputApiKey, steamID);
+  }
+
+  const handleGetGameList = async (vanity: string, apiKey: string, steamID: string) => {
     setLoading(true); // Set loading to true
     try {
       const gameData = await API.dataRetriever.getOwnedGames(vanity, apiKey, steamID);
       gameData.sort((a, b) => b.playtime - a.playtime);
 
-      const updatedGameData = await Promise.all(
-        gameData.map(async (game) => {
-          const timeToBeatData = await API.dataRetriever.getEstimatedLengthToBeat(game.name);
-          return {
-            ...game,
-            timeToBeat: {
-              mainStory: timeToBeatData.mainStory,
-              mainExtra: timeToBeatData.mainExtra,
-              completionist: timeToBeatData.completionist,
-            },
-            playtime: parseFloat(game.playtime.toString()),
-          };
-        })
-      );
-
-      setGameData(updatedGameData);
+      setGameData(gameData);
     } catch (error) {
       console.error("Error fetching game data:", error);
     } finally {
@@ -43,8 +32,18 @@ const HomePage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const users = await API.database.getIndexedUsers();
+      setIndexedUsers(users);
+    };
+  
+    fetchUsers();
+  }, []);
+
   return (
     <div className="home-page">
+      <h1>Prioritize Your Backlog</h1>
       <div className='info'>
         <div className='input'>
           <label>Steam API Key</label>
@@ -67,7 +66,7 @@ const HomePage: React.FC = () => {
             }}
           />
           <button
-            onClick={handleGetGameList}
+            onClick={() => {handleGetGameList(inputVanity, inputApiKey, inputSteamID)}}
             disabled={loading} // Disable button while loading
           >
             {loading ? "Loading..." : "Get Game List"} {/* Show loading text */}
@@ -75,6 +74,14 @@ const HomePage: React.FC = () => {
         </div>
         <div className='indexed-users'>
           <label className='indexed-users-label'>Indexed Users</label>
+          <ul>
+            {indexedUsers && indexedUsers.map((user) => (
+              <li 
+                key={user.id}
+                onClick={() => {handleIndexedUserClick(user.steamID);}}
+              >{user.vanity}:{user.steamID}</li>
+            ))}
+          </ul>
         </div>
       </div>
       <div className="game-list">
@@ -91,9 +98,7 @@ const HomePage: React.FC = () => {
                 <div className="game-time-to-beat">
                   {game.timeToBeat && (
                     <div>
-                      <div>Main Story: {game.timeToBeat.mainStory} hours</div>
-                      <div>Main Extra: {game.timeToBeat.mainExtra} hours</div>
-                      <div>Completionist: {game.timeToBeat.completionist} hours</div>
+                      <div>Average Time to Beat: {game.timeToBeat} hours</div>
                     </div>
                   )}
                 </div>

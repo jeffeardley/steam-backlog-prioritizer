@@ -11,12 +11,12 @@ export class HowLongToBeatAPIUtility {
         try {
             const data = await this.api.search(gameName);
             if (!data || data.length === 0) {
-                throw new Error(`No data found for game: ${gameName}`);
+                return 0;
             }
-            return data[0];
+            return data[0].gameplayMain;
         } catch (error) {
             // console.error('Error fetching game data:', error);
-            throw error;
+            return 0;
         }
     }
 }

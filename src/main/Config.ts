@@ -2,6 +2,7 @@ import { BrowserWindow } from "electron";
 import { AppController, AppControllerBuilder } from "./AppController";
 import { SuggesterController } from "./suggester/SuggesterController";
 import { DataRetrieverController } from "./data-retriever/DataRetrieverController";
+import { DatabaseController } from "./database/DatabaseController";
 
 export interface IConfig {
     appController: AppController;
@@ -37,6 +38,7 @@ export class DefaultConfig implements IConfig {
 
             controllerBuilder.set( 'suggester', new SuggesterController() );
             controllerBuilder.set( 'data-retriever', new DataRetrieverController() );
+            controllerBuilder.set( 'database', new DatabaseController() );
 
             this._appController = controllerBuilder.create();
         }

@@ -10,9 +10,11 @@ interface BackEndAPI {
         suggest: () => Promise<string>;
     };
     dataRetriever: {
-        getOwnedGames: (vanity: string, api_key: string, steamID: string) => Promise<GameData[]>
-        getEstimatedLengthToBeat: (gameName: string) => Promise<any>;
+        getOwnedGames: (vanity: string, api_key: string, steamID: string, forceIndex?: boolean) => Promise<GameData[]>
     };
+    database: {
+        getIndexedUsers: () => Promise<string[]>;
+    }
 }
 
 declare global {
@@ -28,10 +30,12 @@ const api: BackEndAPI = {
             ipcRenderer.invoke('ipc-request', 'suggester/suggest'),
     },
     dataRetriever: {
-        getOwnedGames: (vanity, api_key, steamID) =>
-            ipcRenderer.invoke('ipc-request', 'data-retriever/getOwnedGames', vanity, api_key, steamID),
-        getEstimatedLengthToBeat: (gameName) =>
-            ipcRenderer.invoke('ipc-request', 'data-retriever/getTimeToBeat', gameName),
+        getOwnedGames: (vanity, api_key, steamID, forceIndex) =>
+            ipcRenderer.invoke('ipc-request', 'data-retriever/getOwnedGames', vanity, api_key, steamID, forceIndex),
+    },
+    database: {
+        getIndexedUsers: () => 
+            ipcRenderer.invoke('ipc-request', 'database/getIndexedUsers')
     }
 };
 

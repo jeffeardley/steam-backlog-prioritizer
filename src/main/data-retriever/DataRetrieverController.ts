@@ -2,7 +2,7 @@ import { BaseController } from "../interfaces/BaseController";
 import { SteamAPIUtility } from "./utilities/SteamAPIUtility";
 import { HowLongToBeatAPIUtility } from "./utilities/HowLongToBeatAPIUtility";
 import { GameData } from "./utilities/SteamAPIUtility";
-import { insertGame, insertUser } from "../Database";
+import { doesUserExist, insertGame, insertUser, insertUserToGame, getUserGames } from "../database/utilities/Database";
 
 export class DataRetrieverController extends BaseController {
     private steamAPI: SteamAPIUtility;
@@ -21,36 +21,44 @@ export class DataRetrieverController extends BaseController {
 
     protected registerActions() {
         this.actions.set('getOwnedGames', this.getOwnedGames.bind(this));
-        this.actions.set('getTimeToBeat', this.getTimeToBeat.bind(this));
     }
 
     async getOwnedGames (
         vanity: string,
         api_key: string,
-        steamID: string
+        steamID: string,
+        forceIndex: boolean = false,
     ): Promise<GameData[]> {
-        let steamIDToUse;
-        if (steamID === '') {
-            steamIDToUse = await this.steamAPI.getSteamID(vanity, this.steamAPIKey);
+        const isPlayerIndexed = await doesUserExist(steamID);
+        if (isPlayerIndexed && !forceIndex) {
+            // Get the cached user data
+            const userGames = await getUserGames(parseInt(steamID));
+            const ownedGames: GameData[] = userGames.map(game => ({
+                name: game.game_title,
+                playtime: game.play_time,
+                appID: game.game_id,
+                timeToBeat: game.play_time,
+            }))
+            return ownedGames;
         } else {
-            steamIDToUse = steamID;
-        }
-        await insertUser(steamIDToUse, vanity);
-        const ownedGames = await this.steamAPI.getOwnedGames(steamIDToUse, this.steamAPIKey);
-        return ownedGames;
-    }
-
-    async getTimeToBeat(gameName: string): Promise<any> {
-        try {
-            const data = await this.howLongToBeatAPI.getGameData(gameName);
-            return {
-                mainStory: data?.gameplayMain ?? null,
-                mainExtra: data?.gameplayMainExtra ?? null,
-                completionist: data?.gameplayCompletionist ?? null,
-            };
-        } catch (error) {
-            // console.error(`Failed to fetch time-to-beat data for ${gameName}:`, error);
-            throw error;
+            // Obtain user data through APIs
+            let steamIDToUse;
+            if (steamID === '') {
+                steamIDToUse = await this.steamAPI.getSteamID(vanity, this.steamAPIKey);
+            } else {
+                steamIDToUse = steamID;
+            }
+            await insertUser(steamIDToUse, vanity);
+            const ownedGames = await this.steamAPI.getOwnedGames(steamIDToUse, this.steamAPIKey);
+            await Promise.all(
+                ownedGames.map(async (game) => {
+                    const timeToBeat = await this.howLongToBeatAPI.getGameData(game.name);
+                    game.timeToBeat = timeToBeat;
+                    await insertGame(game.appID, game.name, null, timeToBeat);
+                    await insertUserToGame(parseInt(steamIDToUse), game.appID, null, parseFloat(game.playtime));
+                })
+            );
+            return ownedGames;
         }
     }
 }

@@ -1,16 +1,10 @@
 import axios from 'axios';
-import { insertGame } from '../../Database';
 
 export interface GameData {
     name: string;
     playtime: string;
     appID: number;
-    iconHash: string;
-    timeToBeat?: {
-        mainStory: number;
-        mainExtra: number;
-        completionist: number;
-    };
+    timeToBeat?: number;
 }
 
 interface SteamGameReturn {
@@ -56,20 +50,12 @@ export class SteamAPIUtility {
                     include_appinfo: true
                 }
             });
-            console.log(res);
 
             const games: SteamGameReturn[] = res.data.response.games || [];
-            console.log('game structure', games[0])
-            await Promise.all(
-                games.map(async (game) => {
-                    await insertGame(game.appid, game.name, null);
-                })
-            );
             const gameData = games.map(game => ({
                 name: game.name.replace(/[^\w\s:.\-]/g, ''), // Remove special characters
                 playtime: (game.playtime_forever / 60).toFixed(2), // Convert from minutes to hours
                 appID: game.appid,
-                iconHash: game.img_icon_url
             }))
 
             return gameData;

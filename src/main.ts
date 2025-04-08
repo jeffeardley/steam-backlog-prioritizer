@@ -5,7 +5,7 @@ import { ipcMain } from 'electron';
 import { DefaultConfig, GlobalConfiguration } from './main/Config';
 import axios from 'axios';
 import 'dotenv/config';
-import { initializeDatabase, closeDatabase } from './main/Database';
+import { initializeDatabase, closeDatabase } from './main/database/utilities/Database';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
