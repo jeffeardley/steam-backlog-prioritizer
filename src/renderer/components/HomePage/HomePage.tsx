@@ -11,31 +11,36 @@ const HomePage: React.FC = () => {
 
   const API = window.BackEndAPI;
 
-  const handleGetGameList = async () => {
-    const gameData = await API.dataRetriever.getOwnedGames(vanity, apiKey, steamID);
-    gameData.sort((a, b) => b.playtime - a.playtime);
-  
-    const updatedGameData = await Promise.all(
-      gameData.map(async (game) => {
-        const timeToBeatData = await API.dataRetriever.getEstimatedLengthToBeat(game.name);
-        return {
-          ...game,
-          timeToBeat: {
-            mainStory: timeToBeatData.mainStory,
-            mainExtra: timeToBeatData.mainExtra,
-            completionist: timeToBeatData.completionist,
-          },
-          playtime: parseFloat(game.playtime.toString()),
-        };
-      })
-    );
-  
-    setGameData(updatedGameData);
-  };
+  const [loading, setLoading] = useState(false); // Add loading state
 
-  // useEffect(() => {
-  //   handleGetGameList();
-  // }, []);
+  const handleGetGameList = async () => {
+    setLoading(true); // Set loading to true
+    try {
+      const gameData = await API.dataRetriever.getOwnedGames(vanity, apiKey, steamID);
+      gameData.sort((a, b) => b.playtime - a.playtime);
+
+      const updatedGameData = await Promise.all(
+        gameData.map(async (game) => {
+          const timeToBeatData = await API.dataRetriever.getEstimatedLengthToBeat(game.name);
+          return {
+            ...game,
+            timeToBeat: {
+              mainStory: timeToBeatData.mainStory,
+              mainExtra: timeToBeatData.mainExtra,
+              completionist: timeToBeatData.completionist,
+            },
+            playtime: parseFloat(game.playtime.toString()),
+          };
+        })
+      );
+
+      setGameData(updatedGameData);
+    } catch (error) {
+      console.error("Error fetching game data:", error);
+    } finally {
+      setLoading(false); // Set loading to false
+    }
+  };
 
   return (
     <div className="home-page">
@@ -60,10 +65,12 @@ const HomePage: React.FC = () => {
       />
       <button
         onClick={handleGetGameList}
+        disabled={loading} // Disable button while loading
       >
-        Get Game List
+        {loading ? "Loading..." : "Get Game List"} {/* Show loading text */}
       </button>
       <div className="game-list">
+        {loading && <div>Loading game data...</div>} {/* Show loading indicator */}
         {gameData && gameData.map((game, index) => (
           <React.Fragment key={index}>
             <div className="game-card">
