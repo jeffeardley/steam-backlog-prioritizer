@@ -10,6 +10,7 @@ export interface GameData {
     releaseDate?: string;
     timeToBeat?: number;
     completionDegree?: number;
+    recommendationStrength?: number;
 }
 
 interface SteamGameReturn {
@@ -95,7 +96,7 @@ export class SteamAPIUtility {
 
         return dataToKeep;
     } catch (error) {
-        console.error(`Error fetching Steam Store details for app ${appid}:`, error);
+        console.error(`Error fetching Steam Store details for app ${appid}`);
         throw error;
     }
     }
@@ -116,8 +117,6 @@ export class SteamAPIUtility {
             const data = await response.json();
     
             const achievements = data.game?.availableGameStats?.achievements || [];
-
-            console.log(achievements);
             
             return achievements.map((ach: any) => ({
                 name: ach.name,
@@ -125,7 +124,7 @@ export class SteamAPIUtility {
                 description: ach.description,
             }));
         } catch (error) {
-            console.error(`Error fetching game achievements for appid ${appid}:`, error.message);
+            console.error(`Error fetching game achievements for appid ${appid}`);
             throw error;
         }
     }

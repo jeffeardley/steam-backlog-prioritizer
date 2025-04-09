@@ -54,6 +54,7 @@ export async function initializeDatabase() {
       game_id INTEGER,
       completion_degree INTEGER,
       play_time INTEGER,
+      recommendation_strength INTEGER,
       PRIMARY KEY (user_id, game_id),
       FOREIGN KEY (user_id) REFERENCES User(id),
       FOREIGN KEY (game_id) REFERENCES Game(game_id)
@@ -111,6 +112,7 @@ export async function getUserGames(user_id: number): Promise<any[]> {
       User_to_Game.game_id,
       User_to_Game.completion_degree,
       User_to_Game.play_time,
+      User_to_Game.recommendation_strength,
       Game.game_title,
       Game.estimated_time_to_beat,
       Game.has_single_player
@@ -184,6 +186,7 @@ export async function insertUserToGame(
   game_id: number,
   completion_degree: number,
   play_time: number,
+  recommendation_strength: number
 ): Promise<void> {
   // Check if the entry already exists
   const existingEntry = await db.get(
@@ -198,8 +201,8 @@ export async function insertUserToGame(
 
   // Insert the new entry
   await db.run(
-    'INSERT INTO User_to_Game (user_id, game_id, completion_degree, play_time) VALUES (?, ?, ?, ?)',
-    [user_id, game_id, completion_degree, play_time]
+    'INSERT INTO User_to_Game (user_id, game_id, completion_degree, play_time, recommendation_strength) VALUES (?, ?, ?, ?, ?)',
+    [user_id, game_id, completion_degree, play_time, recommendation_strength]
   );
 
   console.log(`Entry for user_id ${user_id} and game_id ${game_id} inserted successfully.`);

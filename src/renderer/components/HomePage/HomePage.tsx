@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
     setLoading(true); // Set loading to true
     try {
       const gameData = await API.dataRetriever.getOwnedGames(vanity, apiKey, steamID);
-      gameData.sort((a, b) => a.completionDegree - b.completionDegree);
+      gameData.sort((a, b) => b.recommendationStrength - a.recommendationStrength);
 
       setGameData(gameData);
     } catch (error) {
@@ -100,7 +100,7 @@ const HomePage: React.FC = () => {
                   {(
                     <>
                       <div>Average Time to Beat: {game.timeToBeat} hours</div>
-                      <div>Completion index: {(game.completionDegree).toFixed(2)}</div>
+                      <div>Recommendation Rating: {(game.recommendationStrength * 100).toFixed(2)}</div>
                     </>
                   )}
                 </div>
