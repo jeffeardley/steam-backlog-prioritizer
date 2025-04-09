@@ -21,7 +21,11 @@ export async function initializeDatabase() {
       game_id INTEGER PRIMARY KEY,
       game_title TEXT,
       estimated_time_to_beat INTEGER,
-      has_single_player BOOLEAN
+      has_single_player BOOLEAN,
+      developers TEXT, -- Stored as a JSON string
+      genres TEXT, -- Stored as a JSON string
+      metacritic_score INTEGER,
+      release_date TEXT
     );
 
     CREATE TABLE IF NOT EXISTS Tag (
@@ -125,24 +129,49 @@ export async function getUserGames(user_id: number): Promise<any[]> {
 }
 
 // Function to insert a game
-export async function insertGame(game_id: number, game_title: string, has_single_player: boolean, estimated_time_to_beat: number): Promise<void> {
-    // Check if the game already exists
-    const existingGame = await db.get('SELECT game_id FROM Game WHERE game_id = ?', [game_id]);
-  
-    if (existingGame) {
-      console.log(`Game with game_id ${game_id} already exists.`);
-      return; // Exit if the game already exists
-    }
-  
-    // Insert the new game
-    await db.run('INSERT INTO Game (game_id, game_title, has_single_player, estimated_time_to_beat) VALUES (?, ?, ?, ?)', [
+export async function insertGame(
+  game_id: number,
+  game_title: string,
+  has_single_player: boolean,
+  estimated_time_to_beat: number,
+  developers: string[],
+  genres: string[],
+  metacriticScore: number,
+  release_date: string
+): Promise<void> {
+  // Check if the game already exists
+  const existingGame = await db.get('SELECT game_id FROM Game WHERE game_id = ?', [game_id]);
+
+  if (existingGame) {
+    console.log(`Game with game_id ${game_id} already exists.`);
+    return; // Exit if the game already exists
+  }
+
+  // Insert the new game
+  await db.run(
+    `INSERT INTO Game (
+      game_id, 
+      game_title, 
+      has_single_player, 
+      estimated_time_to_beat, 
+      developers, 
+      genres, 
+      metacritic_score, 
+      release_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
       game_id,
       game_title,
       has_single_player,
-      estimated_time_to_beat
-    ]);
-  
-    console.log(`Game with game_id ${game_id} inserted successfully.`);
+      estimated_time_to_beat,
+      JSON.stringify(developers), // Convert array to JSON string
+      JSON.stringify(genres), // Convert array to JSON string
+      metacriticScore,
+      release_date
+    ]
+  );
+
+  console.log(`Game with game_id ${game_id} inserted successfully.`);
 }
 
 export async function doesUserExist(steamID: string): Promise<boolean> {
@@ -178,7 +207,13 @@ export async function insertUserToGame(
 
 // Function to fetch all games
 export async function getGames(): Promise<any[]> {
-  return await db.all('SELECT * FROM Game');
+  const games = await db.all('SELECT * FROM Game');
+
+  return games.map(game => ({
+    ...game,
+    developers: JSON.parse(game.developers || '[]'), // Parse JSON string to array
+    genres: JSON.parse(game.genres || '[]') // Parse JSON string to array
+  }));
 }
 
 // Close the database connection

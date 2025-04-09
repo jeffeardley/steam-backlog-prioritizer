@@ -22,22 +22,23 @@ const HomePage: React.FC = () => {
     setLoading(true); // Set loading to true
     try {
       const gameData = await API.dataRetriever.getOwnedGames(vanity, apiKey, steamID);
-      gameData.sort((a, b) => b.playtime - a.playtime);
+      gameData.sort((a, b) => a.completionDegree - b.completionDegree);
 
       setGameData(gameData);
     } catch (error) {
       console.error("Error fetching game data:", error);
     } finally {
       setLoading(false); // Set loading to false
+      fetchUsers();
     }
   };
 
+  const fetchUsers = async () => {
+    const users = await API.database.getIndexedUsers();
+    setIndexedUsers(users);
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      const users = await API.database.getIndexedUsers();
-      setIndexedUsers(users);
-    };
-  
     fetchUsers();
   }, []);
 
@@ -96,10 +97,11 @@ const HomePage: React.FC = () => {
               <div className="game-description">
                 <div className="game-playtime">{game.playtime} hours played</div>
                 <div className="game-time-to-beat">
-                  {game.timeToBeat && (
-                    <div>
+                  {(
+                    <>
                       <div>Average Time to Beat: {game.timeToBeat} hours</div>
-                    </div>
+                      <div>Completion index: {(game.completionDegree).toFixed(2)}</div>
+                    </>
                   )}
                 </div>
               </div>

@@ -4,7 +4,12 @@ export interface GameData {
     name: string;
     playtime: string;
     appID: number;
+    gameDevelopers?: string[];
+    genres?: string[];
+    metacriticScore?: number;
+    releaseDate?: string;
     timeToBeat?: number;
+    completionDegree?: number;
 }
 
 interface SteamGameReturn {
@@ -64,4 +69,104 @@ export class SteamAPIUtility {
             // console.error('Error fetching games:', err.message);
         }
     }
+
+    async getSteamStoreDetails(appid: number) {
+    const url = `https://store.steampowered.com/api/appdetails?appids=${appid}`;
+
+    try {
+        const { data } = await axios.get(url);
+        const gameData = data[appid].data;
+
+        if (!gameData) {
+            throw new Error(`Failed to fetch data for AppID ${appid}`);
+        }
+
+        let gameGenres : string[] = [];
+        gameData.genres.forEach((genre) => {
+            gameGenres.push(genre.description)
+        })
+
+        const dataToKeep = {
+            developers: gameData.developers,
+            genres: gameGenres,
+            metacriticScore: gameData.metacritic?.score ?? 80,
+            releaseDate: gameData.release_date?.date || 'Unknown'
+        }
+
+        return dataToKeep;
+    } catch (error) {
+        console.error(`Error fetching Steam Store details for app ${appid}:`, error);
+        throw error;
+    }
+    }
+
+
+    async getGameAchievements(appid: number, api_key: string) {
+        if (!api_key) {
+            throw new Error('API key is required.');
+        }
+        if (!appid || typeof appid !== 'number') {
+            throw new Error('Invalid appid.');
+        }
+    
+        const url = `https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=${api_key}&appid=${appid}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+    
+            const achievements = data.game?.availableGameStats?.achievements || [];
+
+            console.log(achievements);
+            
+            return achievements.map((ach: any) => ({
+                name: ach.name,
+                displayName: ach.displayName,
+                description: ach.description,
+            }));
+        } catch (error) {
+            console.error(`Error fetching game achievements for appid ${appid}:`, error.message);
+            throw error;
+        }
+    }
+
+    async getUserAchievements(appid: number, steamId: string, api_key: string) {
+        if (!api_key) {
+            throw new Error('API key is required.');
+        }
+        if (!appid || typeof appid !== 'number') {
+            throw new Error('Invalid appid.');
+        }
+        if (!steamId || typeof steamId !== 'string') {
+            throw new Error('Invalid steamid.');
+        }
+    
+        const url = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/`;
+    
+        try {
+            const { data } = await axios.get(url, {
+                params: {
+                    key: api_key,
+                    steamid: steamId,
+                    appid: appid,
+                },
+            });
+    
+            if (!data.playerstats?.achievements) {
+                console.warn(`No achievements found for user ${steamId} in game ${appid}.`);
+                return [];
+            }
+    
+            const achievements = data.playerstats.achievements;
+            return achievements.map((ach: any) => ({
+                apiname: ach.apiname,
+                achieved: ach.achieved === 1,
+                unlocktime: ach.unlocktime ? new Date(ach.unlocktime * 1000) : null,
+            }));
+        } catch (error) {
+            console.error(`Error fetching user achievements for appid ${appid} and steamid ${steamId}:`, error.message);
+            throw error;
+        }
+    }
+      
 }

@@ -8,7 +8,7 @@ describe('HowLongToBeatAPIUtility (Live Tests)', () => {
     });
 
     it('should return data for a known game (live test)', async () => {
-        const gameName = 'Undertale';
+        const gameName = 'The Long Dark';
         const result = await utility.getGameData(gameName);
 
         expect(result).toBeDefined();
